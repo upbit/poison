@@ -118,6 +118,13 @@ defimpl Poison.Encoder, for: BitString do
     [seq(char) | escape(rest, :javascript)]
   end
 
+  defp escape(<<char :: utf8>> <> rest, :emoji) when char > 0x1F000 and char < 0x1FA00 do
+    code = char - 0x10000
+    [seq(0xD800 ||| (code >>> 10)),
+     seq(0xDC00 ||| (code &&& 0x3FF))
+     | escape(rest, :emoji)]
+  end
+
   defp escape(string, mode) do
     size = chunk_size(string, mode, 0)
     <<chunk :: binary-size(size), rest :: binary>> = string
